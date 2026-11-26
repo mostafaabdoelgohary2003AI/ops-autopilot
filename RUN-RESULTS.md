@@ -1,17 +1,20 @@
-# Run Results (real)
+# Run Results (real, single runs)
 
-End-to-end live run, topic "Retrieval-augmented generation"
-(Wikipedia APIs, full plaintext articles):
-
+## Live run with the hosted LLM writer (Nov 26, 2026)
+Topic "Retrieval-augmented generation", live Wikipedia APIs, writer = Gemini free tier (`gemini-3.1-flash-lite`).
 - research facets planned: 5 (overview, history, methods, applications, limitations)
-- sources found: 5/5 (100% coverage), live fetch run 13.4s; cached reruns <1s
-- critic first-try pass: 5/5 on the final recipe (an earlier recipe needed 1 revision; the loop works and is exercised in tests)
-- output: results/sample_report.docx (real export, 5 cited sections)
-- tests: 5/5 passing (offline, researcher stubbed; writer abstention, critic flags, pipeline metrics)
+- sections written by the LLM: 5/5; passed the Critic on the first try: 5/5; 31.5 s end to end (an earlier run took 45.6 s)
+- distinct sources: **1**. All five sections were built from the same Wikipedia article, so the earlier "5/5 sources, 100% coverage" figure only meant that each facet found some text; coverage is shallow.
+- The Critic checks length, citations and vague wording. It does not check factual accuracy; the number guard only catches invented digits.
+- one run, not a benchmark
 
-Honest limits: English Wikipedia only; extractive summaries (sentences quoted
-from sources, not free generation) - chosen deliberately so no claim in a
-report is ungrounded. Rate-limited politely (1.2s pacing, backoff, local cache).
+## Offline / extractive mode
+The first version (no LLM) quoted sentences from the sources instead of writing new text. That mode is still the fallback when no `LLM_API_KEY` is set. Cached reruns take under a second, which is why `results/run_metrics.json` shows `run_seconds: 0.0`.
 
-Reproduce: python -m src.api, POST /run {"topic": "..."}, or
+## Tests
+5/5 pass offline (researcher stubbed): writer abstention, critic flags, pipeline metrics.
+
+Honest limits: English Wikipedia only; rate-limited politely (1.2 s pacing, backoff, local cache).
+
+Reproduce: `python -m src.api` and POST /run {"topic": "..."}, or
     python -c "from src import pipeline; print(pipeline.run('your topic')['metrics'])"
