@@ -13,6 +13,11 @@ fetched text (it cannot invent facts by construction), **Critic** scores each dr
 - Offline-capable: responses are cached, tests stub the network, the pipeline is deterministic given the same sources
 - Docker + docker-compose + GitHub Actions CI; 5/5 tests pass
 
+## Screenshot
+![ops-autopilot UI](results/ui.png)
+
+Real capture of the app running locally: one topic in, the five agent steps, source coverage, the cited report and recent runs.
+
 ## Run
     pip install -r requirements.txt
     python -m pytest -q
