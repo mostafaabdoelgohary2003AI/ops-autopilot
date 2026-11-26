@@ -70,7 +70,39 @@ def write_section(item, used_sentences):
     if not sents:
         sents = split_sentences(src["extract"])[:1]
     draft = " ".join(sents) + f" (Source: {src['title']}, Wikipedia.)"
-    return {"facet": item["facet"], "draft": draft, "source_title": src["title"], "url": src["url"]}
+    out = {"facet": item["facet"], "draft": draft, "source_title": src["title"], "url": src["url"], "writer": "extractive"}
+    llm = llm_write(item["facet"], item["topic"], " ".join(sents) if sents else src["extract"][:1500], src["title"])
+    if llm:
+        out.update(draft=llm, writer="llm")
+    return out
+
+def llm_write(facet, topic, source_text, title):
+    """Optional hosted-LLM writer (OpenAI-compatible, key from LLM_API_KEY; default Gemini free tier).
+    It may only rewrite the fetched source text. The draft is rejected (extractive text is used instead)
+    if it introduces a number that is not in the source."""
+    import os, json, urllib.request, urllib.error, time
+    key = os.environ.get("LLM_API_KEY")
+    if not key:
+        return None
+    base = os.environ.get("LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai").rstrip("/")
+    body = json.dumps({"model": os.environ.get("LLM_MODEL", "gemini-3.1-flash-lite"), "temperature": 0.2,
+        "messages": [{"role": "system", "content": "Rewrite the SOURCE into a clear 2-3 sentence paragraph for the section named by FACET. Use only facts in the SOURCE. Do not add numbers, names or dates that are not in it. Plain text only."},
+                     {"role": "user", "content": f"TOPIC: {topic}\nFACET: {facet}\nSOURCE: {source_text}"}]}).encode()
+    for attempt in range(3):
+        try:
+            req = urllib.request.Request(base + "/chat/completions", body, {"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+            txt = json.load(urllib.request.urlopen(req, timeout=30))["choices"][0]["message"]["content"].strip()
+            break
+        except Exception:
+            if attempt == 2:
+                return None
+            time.sleep(2 * (attempt + 1))
+    txt = " ".join(l.strip() for l in txt.splitlines()
+                   if l.strip() and not l.strip().upper().startswith("FACET") and l.strip().strip("#*: ").lower() != facet.lower())
+    new_nums = set(re.findall(r"\d+", txt)) - set(re.findall(r"\d+", source_text))
+    if new_nums:
+        return None
+    return txt + f" (Source: {title}, Wikipedia.)"
 
 def critique(section):
     """Critic: score a draft on grounding signals; returns (ok, issues)."""

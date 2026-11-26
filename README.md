@@ -22,8 +22,13 @@ fetched text (it cannot invent facts by construction), **Critic** scores each dr
 ## Design notes
 The agents are explicit, inspectable Python rather than black-box LLM calls, so
 every number in RUN-RESULTS.md is reproducible and every sentence in a report
-traces to a fetched source. An external LLM can be plugged into the writer
-without changing the orchestration.
+traces to a fetched source. The writer can optionally use a hosted LLM (see below); the default run stays
+offline and extractive.
 
 Built with AI pair-programming; all runs and metrics are real.
 
+
+## Real LLM writer (Gemini API free tier)
+Set `LLM_API_KEY` (environment only, never committed; optional `LLM_BASE_URL`, `LLM_MODEL`, default `gemini-3.1-flash-lite`) and the Writer rewrites each section from the fetched Wikipedia text. It may use only facts in that text: a draft that introduces a number not in the source is rejected and the extractive text is used instead. The Critic runs on every draft as before.
+
+Measured Nov 26, 2026 on the topic "Retrieval-augmented generation" (live Wikipedia + hosted LLM, one run): 5 of 5 sections written by the LLM, 5 of 5 passed the Critic first try, 31.5 s end to end (an earlier run took 45.6 s; free-tier latency varies). Limits: the Critic checks length, citation and vague wording, not factual accuracy, and the number guard only catches invented digits. In this run all 5 sections came from a single Wikipedia article (distinct_sources = 1), so coverage is shallow. The first run echoed section headings into two drafts, which is why the writer now strips them.
