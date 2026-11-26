@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Ops Autopilot</title>
+<style>
+  body {font-family:-apple-system,"Segoe UI",Arial,sans-serif; background:#e8fafa; margin:0; color:#123c44;}
+  .wrap {max-width:920px; margin:36px auto; padding:0 20px;}
+  h1 {color:#006070; font-size:1.9rem; margin-bottom:4px; letter-spacing:-.02em;}
+  .sub {color:#00808c; margin-bottom:22px;}
+  .flow {display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .flow span {background:#fff; border:1px solid #cfeeee; border-left:4px solid #00c0c0; border-radius:8px;
+              padding:8px 12px; color:#006070; font-size:.85rem;}
+  .card {background:#fff; border:1px solid #cfeeee; border-radius:12px; padding:22px;
+         box-shadow:0 1px 3px rgba(0,96,112,.08); margin-bottom:18px;}
+  input {width:70%; border:1px solid #bfe6e6; border-radius:10px; padding:12px; font-size:1rem;}
+  button {background:#006070; color:#fff; border:0; border-radius:8px; padding:12px 22px; font-size:1rem; cursor:pointer;}
+  button:hover {background:#00808c;}
+  .kpi {display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:16px 0;}
+  .kpi div {background:#e8fafa; border-radius:10px; padding:10px 14px;}
+  .kpi b {display:block; color:#006070; font-size:1.2rem;}
+  .kpi span {color:#00808c; font-size:.75rem;}
+  .sec {border-top:1px solid #e0f4f4; padding:12px 0;}
+  .sec h3 {color:#006070; font-size:1rem; margin:0 0 6px;}
+  .sec p {margin:0 0 6px; line-height:1.5;}
+  .sec a {color:#d45d4a; font-size:.85rem;}
+  .hist {font-size:.85rem; color:#00808c;}
+</style></head><body><div class="wrap">
+<h1>Ops Autopilot</h1>
+<div class="sub">Multi-agent research ops: one topic in, a cited DOCX report out. Every agent is real, inspectable code; every fact comes from a live source.</div>
+<div class="flow"><span>1 Planner</span><span>2 Researcher (live Wikipedia API)</span><span>3 Writer</span><span>4 Critic + revise loop</span><span>5 Publisher (DOCX)</span></div>
+<div class="card">
+  <input id="t" placeholder="e.g. Retrieval-augmented generation" onkeydown="if(event.key==='Enter')go()">
+  <button onclick="go()">Run pipeline</button>
+  <div id="kpis"></div>
+  <div id="secs"></div>
+  <div id="dl"></div>
+</div>
+<div class="card"><b style="color:#006070">Recent runs</b><div id="hist" class="hist">loading...</div></div>
+</div>
+<script>
+async function go(){
+  const t=document.getElementById('t').value; if(!t) return;
+  document.getElementById('secs').innerHTML='<p class="hist">agents working... (live API fetches)</p>';
+  const r=await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:t})});
+  const j=await r.json(); const m=j.metrics;
+  document.getElementById('kpis').innerHTML='<div class="kpi">'+
+    `<div><b>${m.sources_found}/${m.questions}</b><span>sources found</span></div>`+
+    `<div><b>${Math.round(m.source_coverage*100)}%</b><span>source coverage</span></div>`+
+    `<div><b>${m.sections_passed_critic_first_try}</b><span>critic pass 1st try</span></div>`+
+    `<div><b>${m.run_seconds}s</b><span>run time</span></div></div>`;
+  document.getElementById('secs').innerHTML=j.sections.filter(s=>s.draft).map(s=>
+    `<div class="sec"><h3>${s.question}</h3><p>${s.draft}</p>${s.url?`<a href="${s.url}">${s.url}</a>`:''}</div>`).join('');
+  document.getElementById('dl').innerHTML='<p><a href="/download" style="color:#006070"><b>Download DOCX report</b></a></p>';
+  loadHist();
+}
+async function loadHist(){
+  const r=await fetch('/history'); const j=await r.json();
+  document.getElementById('hist').innerHTML=j.map(h=>
+    `<div>#${h.id} ${h.topic} - coverage ${Math.round(h.metrics.source_coverage*100)}%, ${h.metrics.run_seconds}s</div>`).join('')||'no runs yet';
+}
+loadHist();
+</script></body></html>

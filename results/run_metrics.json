@@ -1,0 +1,10 @@
+{
+  "topic": "Retrieval-augmented generation",
+  "questions": 5,
+  "sources_found": 5,
+  "distinct_sources": 1,
+  "source_coverage": 1.0,
+  "sections_passed_critic_first_try": 5,
+  "revised_sections": 0,
+  "run_seconds": 0.0
+}

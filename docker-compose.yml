@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: opspass
+      POSTGRES_DB: opsautopilot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  app:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DATABASE_URL: postgresql://postgres:opspass@db:5432/opsautopilot
+    depends_on: [db]
+volumes:
+  pgdata:

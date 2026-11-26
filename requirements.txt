@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pydantic
+python-docx
+psycopg2-binary
+pytest
