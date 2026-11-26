@@ -24,3 +24,6 @@ traces to a fetched source. An external LLM can be plugged into the writer
 without changing the orchestration.
 
 Built with AI pair-programming; all runs and metrics are real.
+
+## CI
+The GitHub Actions workflow is stored at `ci/github-actions-ci.yml`. Copy it to `.github/workflows/ci.yml` to enable it.
