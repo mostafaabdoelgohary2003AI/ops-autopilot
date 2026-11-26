@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" width="128" alt="ops-autopilot logo"></p>
+
 # Ops Autopilot — multi-agent research-ops report generator
 
 One topic in, a cited DOCX report out. Five specialized agents run in sequence:
